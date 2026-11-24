@@ -235,6 +235,16 @@ const en = {
           "For node-level recovery; high impact, use with caution",
         ],
       },
+      {
+        icon: "mdi-shield-lock-outline",
+        name: "Multivisor Service Protection",
+        desc: "The Multivisor communication service must be named multivisor-rpc for the UI to apply protection.",
+        notes: [
+          "Process names are matched exactly and are case-sensitive; other names are not protected",
+          "The service is grayed out and cannot be selected; select-all and bulk actions exclude it",
+          "Individual start, stop, and restart actions are disabled; details and logs remain available",
+        ],
+      },
     ],
   },
   timeAgo: {
