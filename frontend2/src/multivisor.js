@@ -20,6 +20,8 @@ export const notificationColorMap = {
 
 export const ALERT_STATES = new Set(["FATAL", "BACKOFF", "UNKNOWN"]);
 
+export const isProtectedProcess = (process) => process.name === "multivisor-rpc";
+
 export const stateClassMap = {
   RUNNING: "c-running",
   FATAL: "c-danger",

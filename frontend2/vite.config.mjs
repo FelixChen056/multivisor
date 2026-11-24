@@ -105,5 +105,11 @@ export default defineConfig({
   test: {
     // e2e/ holds Playwright tests
     include: ["src/**/*.test.js"],
+    // 真实组件渲染测试需要由 Vite 处理 Vuetify 导入的样式。
+    server: {
+      deps: {
+        inline: ["vuetify"],
+      },
+    },
   },
 });

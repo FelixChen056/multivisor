@@ -1,6 +1,10 @@
 import { computed, ref, toValue, watch } from "vue";
 
-import { ALERT_STATES, groupProcessesBySupervisor } from "../multivisor";
+import {
+  ALERT_STATES,
+  groupProcessesBySupervisor,
+  isProtectedProcess,
+} from "../multivisor";
 
 function matchesSearch(process, query, localizedStateNames) {
   return (
@@ -79,7 +83,9 @@ export function useProcessView({ source, scopeKey, labels }) {
   function selectFiltered() {
     const uidSet = new Set(selectedUids.value);
     for (const process of filteredProcesses.value) {
-      uidSet.add(process.uid);
+      if (!isProtectedProcess(process)) {
+        uidSet.add(process.uid);
+      }
     }
     selectedUids.value = [...uidSet];
   }

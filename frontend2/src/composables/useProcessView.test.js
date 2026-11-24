@@ -174,6 +174,47 @@ describe("共享进程视图", () => {
     scope.stop();
   });
 
+  test("全选跳过各节点的 multivisor-rpc，仍保留显示和其他同前缀进程", () => {
+    const rpcProcesses = ["node-a", "node-b"].map((supervisor) => ({
+      ...processes[0],
+      uid: `${supervisor}:rpc:multivisor-rpc`,
+      name: "multivisor-rpc",
+      supervisor,
+    }));
+    const ordinaryProcess = {
+      ...processes[0],
+      uid: "node-a:core:multivisor-rpc-worker",
+      name: "multivisor-rpc-worker",
+    };
+    const source = ref([...processes, ...rpcProcesses, ordinaryProcess]);
+    const { scope, view } = createView(source);
+
+    view.selectFiltered();
+
+    expect(view.filteredProcesses.value).toEqual(source.value);
+    expect(view.selectedUids.value).toEqual([
+      ...processes.map((process) => process.uid),
+      ordinaryProcess.uid,
+    ]);
+    scope.stop();
+  });
+
+  test("筛选结果只有 multivisor-rpc 时全选保持空选择", () => {
+    const rpcProcess = {
+      ...processes[0],
+      uid: "node-a:rpc:multivisor-rpc",
+      name: "multivisor-rpc",
+    };
+    const { scope, view } = createView(ref([...processes, rpcProcess]));
+    view.search.value = "multivisor-rpc";
+
+    view.selectFiltered();
+
+    expect(view.filteredProcesses.value).toEqual([rpcProcess]);
+    expect(view.selectedUids.value).toEqual([]);
+    scope.stop();
+  });
+
   test("源更新移除失效选择，清除筛选不影响选择", async () => {
     const source = ref([...processes]);
     const { scope, view } = createView(source);

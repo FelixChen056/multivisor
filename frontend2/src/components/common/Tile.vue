@@ -1,10 +1,11 @@
 <template lang="html">
-  <v-list-item>
+  <v-list-item :class="{ 'is-protected': protectedProcess }">
     <template v-slot:prepend>
       <v-checkbox-btn
         hide-details
         v-model="selectedProcesses"
         :value="process.uid"
+        :disabled="protectedProcess"
       ></v-checkbox-btn>
     </template>
 
@@ -17,6 +18,7 @@
           variant="flat"
           icon
           :aria-label="process.running ? t.restart : t.start"
+          :disabled="protectedProcess"
           @click="restartProcess(process)"
         >
           <v-icon color="green">
@@ -28,7 +30,7 @@
           variant="flat"
           icon
           @click="stopProcess(process)"
-          :disabled="!process.running"
+          :disabled="protectedProcess || !process.running"
           :aria-label="t.stop"
         >
           <v-icon :color="process.running ? 'red' : 'gray'">mdi-stop</v-icon>
@@ -78,6 +80,7 @@
 
 <script setup>
 import ProcessState from "./State";
+import { isProtectedProcess } from "@/multivisor";
 import { useAppStore } from "@/stores/app";
 import { usePreferencesStore } from "@/stores/preferences";
 
@@ -85,6 +88,7 @@ const store = useAppStore();
 const { labels: t } = storeToRefs(usePreferencesStore());
 
 const { process } = defineProps(["process"]);
+const protectedProcess = computed(() => isProtectedProcess(process));
 
 const selectedProcesses = computed({
   get() {
@@ -120,6 +124,11 @@ const viewDetails = (process) => {
 </script>
 
 <style scoped>
+.is-protected {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+
 :deep(.v-btn--disabled.v-btn--variant-elevated .v-btn__overlay),
 :deep(.v-btn--disabled.v-btn--variant-flat .v-btn__overlay) {
   opacity: 0;

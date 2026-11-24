@@ -22,6 +22,7 @@
           <v-checkbox-btn
             :model-value="selectedUids.includes(process.uid)"
             :aria-label="labels.selectProcess(process.name)"
+            :disabled="isProtectedProcess(process)"
             density="compact"
             color="primary"
             @click.stop
@@ -95,7 +96,7 @@
 <script setup>
 import { computed } from "vue";
 
-import { stateClassMap } from "@/multivisor";
+import { isProtectedProcess, stateClassMap } from "@/multivisor";
 
 import ProcessActions from "./Actions.vue";
 
@@ -143,6 +144,7 @@ function formatUptime(seconds) {
 // 选中品牌 tint + 左边框、正在查看品牌边框（对齐 v2.3 行语义）
 function procCardClass(process) {
   return [
+    isProtectedProcess(process) ? "is-protected" : "",
     process.statename === "FATAL"
       ? "is-fatal"
       : stateClassMap[process.statename] === "c-attention"
@@ -188,6 +190,7 @@ const actionsEnabled = computed(
 function canControlProcess(process) {
   return (
     actionsEnabled.value &&
+    !isProtectedProcess(process) &&
     props.supervisors.some(
       (supervisor) =>
         supervisor.name === process.supervisor && supervisor.running,
@@ -199,3 +202,10 @@ function isPending(process) {
   return props.pendingUids.includes(process.uid);
 }
 </script>
+
+<style scoped>
+.proc-card.is-protected {
+  filter: grayscale(1);
+  opacity: 0.65;
+}
+</style>

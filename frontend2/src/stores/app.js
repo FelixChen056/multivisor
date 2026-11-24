@@ -446,6 +446,7 @@ export const useAppStore = defineStore("app", {
           const supervisor = this.multivisor.supervisors[process?.supervisor];
           if (
             !process ||
+            multivisor.isProtectedProcess(process) ||
             !supervisor?.running ||
             (action === "start" && process.running) ||
             (action === "stop" && !process.running)
@@ -683,11 +684,18 @@ export const useAppStore = defineStore("app", {
       useInspectorStore().open(log.process.uid, log.stream);
     },
     setSelectedProcesses(selectedProcesses) {
-      this.selectedProcesses = selectedProcesses;
+      const protectedUids = new Set(
+        this.processes
+          .filter(multivisor.isProtectedProcess)
+          .map((process) => process.uid),
+      );
+      this.selectedProcesses = selectedProcesses.filter(
+        (uid) => !protectedUids.has(uid),
+      );
     },
     addSelectedProcesses(processes) {
       let toAdd = new Set([...this.selectedProcesses, ...processes]);
-      this.selectedProcesses = [...toAdd];
+      this.setSelectedProcesses([...toAdd]);
     },
     removeSelectedProcesses(processes) {
       let toRemove = new Set(processes);

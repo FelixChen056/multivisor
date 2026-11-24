@@ -120,6 +120,59 @@ describe("真实操作提交与集中确认", () => {
     expect(store.multivisor).toEqual(original);
   });
 
+  it.each(["setSelectedProcesses", "addSelectedProcesses"])(
+    "旧页面的 %s 排除 multivisor-rpc 并保留普通进程",
+    (method) => {
+      const store = readyStore(["a", "multivisor-rpc", "multivisor-rpc-worker"]);
+
+      store[method]([
+        "n:g:a",
+        "n:g:multivisor-rpc",
+        "n:g:multivisor-rpc-worker",
+      ]);
+
+      expect(store.selectedProcesses).toEqual([
+        "n:g:a",
+        "n:g:multivisor-rpc-worker",
+      ]);
+    },
+  );
+
+  it("旧页面全选排除 multivisor-rpc，进程统计保留该服务", () => {
+    const store = readyStore(["a", "multivisor-rpc"]);
+
+    store.selectAll();
+
+    expect(store.selectedProcesses).toEqual(["n:g:a"]);
+    expect(store.totalNbProcesses).toBe(2);
+  });
+
+  it.each(["start", "stop", "restart"])(
+    "%s 提交跳过 multivisor-rpc，并继续操作其余进程",
+    async (action) => {
+      const store = readyStore(["a", "multivisor-rpc", "multivisor-rpc-worker"]);
+      for (const currentProcess of store.processes) {
+        currentProcess.running = action !== "start";
+      }
+      api.processAction.mockResolvedValue({ ok: true, status: 200 });
+
+      const results = await store.runProcessAction(
+        ["n:g:multivisor-rpc", "n:g:a", "n:g:multivisor-rpc-worker"],
+        action,
+      );
+
+      expect(api.processAction.mock.calls).toEqual([
+        ["n:g:a", action],
+        ["n:g:multivisor-rpc-worker", action],
+      ]);
+      expect(results.map((result) => result.requestState)).toEqual([
+        "not-submitted",
+        "accepted",
+        "accepted",
+      ]);
+    },
+  );
+
   it("网络失败逐项标记失败并保留选择", async () => {
     const store = readyStore(["a"]);
     store.setSelectedProcesses(["n:g:a"]);
