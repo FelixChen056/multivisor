@@ -139,13 +139,39 @@ const emptyMessage = computed(() => {
 });
 
 async function copyVisibleLog() {
-  if (!navigator.clipboard) {
+  const outputElement = logPaneElement.value?.querySelector("pre");
+  if (!outputElement) {
     copyState.value = "failed";
     return;
   }
   try {
-    await navigator.clipboard.writeText(visibleLogLines.value.join("\n"));
-    copyState.value = "success";
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(outputElement.textContent);
+      copyState.value = "success";
+      return;
+    }
+    const selection = window.getSelection();
+    if (!selection) {
+      copyState.value = "failed";
+      return;
+    }
+    const previousRanges = Array.from(
+      { length: selection.rangeCount },
+      (_, index) => selection.getRangeAt(index).cloneRange(),
+    );
+    const range = document.createRange();
+    range.selectNodeContents(outputElement);
+    // HTTP 页面没有 Clipboard API，复制现有日志选区后恢复用户原有选区。
+    try {
+      selection.removeAllRanges();
+      selection.addRange(range);
+      copyState.value = document.execCommand("copy") ? "success" : "failed";
+    } finally {
+      selection.removeAllRanges();
+      for (const previousRange of previousRanges) {
+        selection.addRange(previousRange);
+      }
+    }
   } catch {
     copyState.value = "failed";
   }
